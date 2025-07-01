@@ -1,0 +1,21 @@
+<div class="mb-4 last:mb-0 p-3 border border-gray-300 rounded-md bg-gray-50">
+  <div class="flex items-center mb-2">
+    <input type="checkbox" class="mr-3 w-4 h-4" [checked]="allDayAppointmentsSelected()" [indeterminate]="isDayIndeterminate()" (change)="toggleDaySelection($event)">
+    <h4 class="text-lg font-medium">Giorno {{ day.giorno }}</h4>
+  </div>
+  <div class="ml-7 text-sm text-gray-600">
+    <p>Appuntamenti totali: {{ getAppointmentCounts(day).total }}</p>
+    <p>Confermati: {{ getAppointmentCounts(day).confirmed }}</p>
+    <p>Annullati: {{ getAppointmentCounts(day).cancelled }}</p>
+    <p>Da confermare: {{ getAppointmentCounts(day).toConfirm }}</p>
+
+    <div *ngFor="let appointment of day.appuntamenti" class="flex items-center mt-2 ml-4">
+      <input type="checkbox" class="mr-2 w-4 h-4" [(ngModel)]="appointment.selected" (change)="toggleAppointmentSelection(appointment, $event)">
+      <span [class.line-through]="appointment.annullato" [class.font-bold]="appointment.confermato">
+        {{ appointment.descrizione }} - {{ appointment.date | date:'shortTime' }}
+        <span *ngIf="appointment.confermato" class="text-green-600">(Confermato)</span>
+        <span *ngIf="appointment.annullato" class="text-red-600">(Annullato)</span>
+      </span>
+    </div>
+  </div>
+</div>
