@@ -13,18 +13,26 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './month-view.css'
 })
 export class MonthViewComponent {
-  @Input() month!: Month;
+  @Input() monthName!: string;
 
   constructor(private appointmentService: AppointmentService) {}
 
+  currentMonth = computed(() => {
+    return this.appointmentService.mainList().find(m => m.mese === this.monthName);
+  });
+
   allMonthAppointmentsSelected = computed(() => {
-    return this.month.giorni.every(day =>
+    const month = this.currentMonth();
+    if (!month) return false;
+    return month.giorni.every(day =>
       day.appuntamenti.every(appointment => appointment.selected)
     );
   });
 
   isMonthIndeterminate = computed(() => {
-    const allAppointments = this.month.giorni.flatMap(day => day.appuntamenti);
+    const month = this.currentMonth();
+    if (!month) return false;
+    const allAppointments = month.giorni.flatMap(day => day.appuntamenti);
     if (allAppointments.length === 0) {
       return false;
     }
@@ -34,6 +42,6 @@ export class MonthViewComponent {
 
   toggleMonthSelection(event: Event) {
     const checked = (event.target as HTMLInputElement).checked;
-    this.appointmentService.updateMonthSelection(this.month.mese, checked);
+    this.appointmentService.updateMonthSelection(this.monthName, checked);
   }
 }

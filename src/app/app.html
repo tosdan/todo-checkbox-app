@@ -25,7 +25,7 @@
       Nessun appuntamento presente. Aggiungine uno!
     </div>
 
-    <app-month-view *ngFor="let month of appointmentService.mainList()" [month]="month"></app-month-view>
+    <app-month-view *ngFor="let month of appointmentService.mainList()" [monthName]="month.mese"></app-month-view>
   </div>
 
   <div class="text-center">
