@@ -13,6 +13,7 @@ import { FormsModule } from '@angular/forms';
 })
 export class DayViewComponent {
   @Input() day!: Day;
+  @Input() monthName!: string;
 
   constructor(private appointmentService: AppointmentService) {}
 
@@ -39,12 +40,7 @@ export class DayViewComponent {
 
   toggleDaySelection(event: Event) {
     const checked = (event.target as HTMLInputElement).checked;
-    // Assuming month name is available from a parent component or can be derived from date
-    // For now, we'll need to pass it down or derive it from the first appointment's date
-    const monthName = this.day.appuntamenti[0]?.date.toLocaleString('default', { month: 'long' });
-    if (monthName) {
-      this.appointmentService.updateDaySelection(monthName, this.day.giorno, checked);
-    }
+    this.appointmentService.updateDaySelection(this.monthName, this.day.giorno, checked);
   }
 
   toggleAppointmentSelection(appointment: Appointment, event: Event) {
