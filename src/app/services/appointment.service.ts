@@ -1,4 +1,5 @@
 import { Injectable, signal, computed } from '@angular/core';
+import { produce } from 'immer';
 import { Appointment, Day, Month } from '../models/appointment.model';
 
 @Injectable({
@@ -115,36 +116,34 @@ export class AppointmentService {
   }
 
   addAppointment(newAppointment: Appointment): void {
-    this.mainList.update(currentList => {
+    this.mainList.update(list => produce(list, draft => {
       const date = new Date(newAppointment.date);
-      const monthName = date.toLocaleString('default', { month: 'long' });
+      const monthNames = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+      const monthName = monthNames[date.getMonth()];
       const dayNumber = date.getDate();
 
-      let month = currentList.find(m => m.mese === monthName);
+      let monthIndex = draft.findIndex(m => m.mese === monthName);
 
-      if (!month) {
-        month = { mese: monthName, giorni: [] };
-        currentList.push(month);
-        // Sort months chronologically (simple alphabetical for now, can be improved)
-        currentList.sort((a, b) => {
+      if (monthIndex === -1) {
+        draft.push({ mese: monthName, giorni: [] });
+        draft.sort((a, b) => {
           const monthOrder = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
           return monthOrder.indexOf(a.mese) - monthOrder.indexOf(b.mese);
         });
+        monthIndex = draft.findIndex(m => m.mese === monthName);
       }
 
-      let day = month.giorni.find(d => d.giorno === dayNumber);
+      let dayIndex = draft[monthIndex].giorni.findIndex(d => d.giorno === dayNumber);
 
-      if (!day) {
-        day = { giorno: dayNumber, appuntamenti: [] };
-        month.giorni.push(day);
-        month.giorni.sort((a, b) => a.giorno - b.giorno);
+      if (dayIndex === -1) {
+        draft[monthIndex].giorni.push({ giorno: dayNumber, appuntamenti: [] });
+        draft[monthIndex].giorni.sort((a, b) => a.giorno - b.giorno);
+        dayIndex = draft[monthIndex].giorni.findIndex(d => d.giorno === dayNumber);
       }
 
-      day.appuntamenti.push({ ...newAppointment, selected: false }); // Initialize selected state
-      day.appuntamenti.sort((a, b) => a.date.getTime() - b.date.getTime());
-
-      return [...currentList]; // Return a new array to trigger signal update
-    });
+      draft[monthIndex].giorni[dayIndex].appuntamenti.push({ ...newAppointment, selected: false });
+      draft[monthIndex].giorni[dayIndex].appuntamenti.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    }));
     this.saveAppointments();
   }
 
@@ -153,134 +152,95 @@ export class AppointmentService {
     this.mainList.set([]);
   }
 
-  // New selection methods
   updateAppointmentSelection(monthName: string, dayNumber: number, appointmentId: number, selected: boolean): void {
-    this.mainList.update(currentList => {
-      return currentList.map(month => {
-        if (month.mese === monthName) {
-          return {
-            ...month,
-            giorni: month.giorni.map(day => {
-              if (day.giorno === dayNumber) {
-                return {
-                  ...day,
-                  appuntamenti: day.appuntamenti.map(appointment => {
-                    if (appointment.id === appointmentId) {
-                      return { ...appointment, selected };
-                    }
-                    return appointment;
-                  }),
-                };
-              }
-              return day;
-            }),
-          };
+    this.mainList.update(list => produce(list, draft => {
+      const month = draft.find(m => m.mese === monthName);
+      if (month) {
+        const day = month.giorni.find(d => d.giorno === dayNumber);
+        if (day) {
+          const appointment = day.appuntamenti.find(a => a.id === appointmentId);
+          if (appointment) {
+            appointment.selected = selected;
+          }
         }
-        return month;
-      });
-    });
+      }
+    }));
     this.saveAppointments();
   }
 
   updateDaySelection(monthName: string, dayNumber: number, selected: boolean): void {
-    this.mainList.update(currentList => {
-      return currentList.map(month => {
-        if (month.mese === monthName) {
-          return {
-            ...month,
-            giorni: month.giorni.map(day => {
-              if (day.giorno === dayNumber) {
-                return {
-                  ...day,
-                  appuntamenti: day.appuntamenti.map(appointment => ({
-                    ...appointment,
-                    selected,
-                  })),
-                };
-              }
-              return day;
-            }),
-          };
+    this.mainList.update(list => produce(list, draft => {
+      const month = draft.find(m => m.mese === monthName);
+      if (month) {
+        const day = month.giorni.find(d => d.giorno === dayNumber);
+        if (day) {
+          day.appuntamenti.forEach(a => a.selected = selected);
         }
-        return month;
-      });
-    });
+      }
+    }));
     this.saveAppointments();
   }
 
   updateMonthSelection(monthName: string, selected: boolean): void {
-    this.mainList.update(currentList => {
-      return currentList.map(month => {
-        if (month.mese === monthName) {
-          return {
-            ...month,
-            giorni: month.giorni.map(day => ({
-              ...day,
-              appuntamenti: day.appuntamenti.map(appointment => ({
-                ...appointment,
-                selected,
-              })),
-            })),
-          };
-        }
-        return month;
-      });
-    });
+    this.mainList.update(list => produce(list, draft => {
+      const month = draft.find(m => m.mese === monthName);
+      if (month) {
+        month.giorni.forEach(day => {
+          day.appuntamenti.forEach(a => a.selected = selected);
+        });
+      }
+    }));
     this.saveAppointments();
   }
 
-  // Action methods for selected appointments
   confirmSelectedAppointments(): void {
-    this.mainList.update(currentList => {
-      return currentList.map(month => ({
-        ...month,
-        giorni: month.giorni.map(day => ({
-          ...day,
-          appuntamenti: day.appuntamenti.map(appointment => {
+    this.mainList.update(list => produce(list, draft => {
+      draft.forEach(month => {
+        month.giorni.forEach(day => {
+          day.appuntamenti.forEach(appointment => {
             if (appointment.selected) {
-              return { ...appointment, confermato: true, annullato: false, selected: false };
+              appointment.confermato = true;
+              appointment.annullato = false;
+              appointment.selected = false;
             }
-            return appointment;
-          }),
-        })),
-      }));
-    });
+          });
+        });
+      });
+    }));
     this.saveAppointments();
   }
 
   cancelSelectedAppointments(): void {
-    this.mainList.update(currentList => {
-      return currentList.map(month => ({
-        ...month,
-        giorni: month.giorni.map(day => ({
-          ...day,
-          appuntamenti: day.appuntamenti.map(appointment => {
+    this.mainList.update(list => produce(list, draft => {
+      draft.forEach(month => {
+        month.giorni.forEach(day => {
+          day.appuntamenti.forEach(appointment => {
             if (appointment.selected) {
-              return { ...appointment, annullato: true, confermato: false, selected: false };
+              appointment.annullato = true;
+              appointment.confermato = false;
+              appointment.selected = false;
             }
-            return appointment;
-          }),
-        })),
-      }));
-    });
+          });
+        });
+      });
+    }));
     this.saveAppointments();
   }
 
   unconfirmSelectedAppointments(): void {
-    this.mainList.update(currentList => {
-      return currentList.map(month => ({
-        ...month,
-        giorni: month.giorni.map(day => ({
-          ...day,
-          appuntamenti: day.appuntamenti.map(appointment => {
+    this.mainList.update(list => produce(list, draft => {
+      draft.forEach(month => {
+        month.giorni.forEach(day => {
+          day.appuntamenti.forEach(appointment => {
             if (appointment.selected) {
-              return { ...appointment, confermato: false, annullato: false, selected: false };
+              appointment.confermato = false;
+              appointment.annullato = false;
+              appointment.selected = false;
             }
-            return appointment;
-          }),
-        })),
-      }));
-    });
+          });
+        });
+      });
+    }));
     this.saveAppointments();
   }
 
