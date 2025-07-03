@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { AppointmentService } from './appointment.service';
+import { AppointmentService, AppointmentsState } from './appointment.service';
 import { Appointment, Month } from '../models/appointment.model';
 import { signal } from '@angular/core';
+import { patchState } from '@ngrx/signals';
 
 describe('AppointmentService', () => {
   let service: AppointmentService;
@@ -34,16 +35,13 @@ describe('AppointmentService', () => {
   ];
 
   beforeEach(() => {
-    // Reset localStorage before each test to ensure isolation
     localStorage.removeItem(localStorageKey);
+    localStorage.setItem(localStorageKey, JSON.stringify(mockData));
 
     TestBed.configureTestingModule({
       providers: [AppointmentService]
     });
     service = TestBed.inject(AppointmentService);
-
-    // Set initial data for tests
-    service.mainList.set(JSON.parse(JSON.stringify(mockData))); // Deep copy
   });
 
   it('should be created', () => {
@@ -115,13 +113,11 @@ describe('AppointmentService', () => {
   });
 
   it('should unconfirm selected appointments', () => {
-    // First, confirm it
     service.updateAppointmentSelection("Gennaio", 12, 2, true);
     service.confirmSelectedAppointments();
     let appointment = service.mainList()[0].giorni[1].appuntamenti[0];
     expect(appointment.confermato).toBe(true);
 
-    // Then, unconfirm it
     service.updateAppointmentSelection("Gennaio", 12, 2, true);
     service.unconfirmSelectedAppointments();
     appointment = service.mainList()[0].giorni[1].appuntamenti[0];
@@ -141,12 +137,9 @@ describe('AppointmentService', () => {
   });
 
   it('should save to and load from localStorage', () => {
-    // Modify data and save
     service.addAppointment({ id: 5, descrizione: "Storage Test", date: new Date(2025, 0, 5) });
-    service.saveAppointments();
 
-    // Create a new service instance to force a load
-    const newService = new AppointmentService();
+    const newService = TestBed.inject(AppointmentService);
     const month = newService.mainList().find(m => m.mese === 'Gennaio');
     const day = month?.giorni.find(d => d.giorno === 5);
     expect(day?.appuntamenti[0].descrizione).toBe("Storage Test");
