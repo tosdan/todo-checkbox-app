@@ -11,21 +11,21 @@
   </div>
 
   <div class="mb-8 p-6 bg-white rounded-lg shadow-md">
-    <h2 class="text-2xl font-semibold mb-4">Azioni sugli Appuntamenti Selezionati ({{ appointmentService.selectedAppointmentsCount() }})</h2>
+    <h2 class="text-2xl font-semibold mb-4">Azioni sugli Appuntamenti Selezionati ({{ store.selectedAppointmentsCount() }})</h2>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <button (click)="confirmSelected()" [disabled]="appointmentService.selectedAppointmentsCount() === 0" class="bg-green-600 text-white p-2 rounded-md hover:bg-green-700 transition duration-300 disabled:opacity-50">Conferma Selezionati</button>
-      <button (click)="cancelSelected()" [disabled]="appointmentService.selectedAppointmentsCount() === 0" class="bg-red-600 text-white p-2 rounded-md hover:bg-red-700 transition duration-300 disabled:opacity-50">Annulla Selezionati</button>
-      <button (click)="unconfirmSelected()" [disabled]="appointmentService.selectedAppointmentsCount() === 0" class="bg-yellow-600 text-white p-2 rounded-md hover:bg-yellow-700 transition duration-300 disabled:opacity-50">Revoca Conferma Selezionati</button>
+      <button (click)="confirmSelected()" [disabled]="store.selectedAppointmentsCount() === 0" class="bg-green-600 text-white p-2 rounded-md hover:bg-green-700 transition duration-300 disabled:opacity-50">Conferma Selezionati</button>
+      <button (click)="cancelSelected()" [disabled]="store.selectedAppointmentsCount() === 0" class="bg-red-600 text-white p-2 rounded-md hover:bg-red-700 transition duration-300 disabled:opacity-50">Annulla Selezionati</button>
+      <button (click)="unconfirmSelected()" [disabled]="store.selectedAppointmentsCount() === 0" class="bg-yellow-600 text-white p-2 rounded-md hover:bg-yellow-700 transition duration-300 disabled:opacity-50">Revoca Conferma Selezionati</button>
     </div>
   </div>
 
   <div class="mb-8 p-6 bg-white rounded-lg shadow-md">
     <h2 class="text-2xl font-semibold mb-4">Appuntamenti</h2>
-    <div *ngIf="appointmentService.mainList().length === 0" class="text-center text-gray-500">
+    <div *ngIf="store.mainList().length === 0" class="text-center text-gray-500">
       Nessun appuntamento presente. Aggiungine uno!
     </div>
 
-    <app-month-view *ngFor="let month of appointmentService.mainList()" [monthName]="month.mese"></app-month-view>
+    <app-month-view *ngFor="let month of store.mainList()" [monthName]="month.mese"></app-month-view>
   </div>
 
   <div class="text-center">

@@ -1,8 +1,8 @@
-import { Component, Input, computed } from '@angular/core';
+import { Component, Input, computed, inject } from '@angular/core';
 import { Day, Appointment } from '../../models/appointment.model';
 import { CommonModule } from '@angular/common';
-import { AppointmentService } from '../../services/appointment.service';
 import { FormsModule } from '@angular/forms';
+import { AppointmentStore } from '../../services/appointment.store';
 
 @Component({
   selector: 'app-day-view',
@@ -15,10 +15,10 @@ export class DayViewComponent {
   @Input() dayNumber!: number;
   @Input() monthName!: string;
 
-  constructor(private appointmentService: AppointmentService) {}
+  private readonly store = inject(AppointmentStore);
 
   currentDay = computed(() => {
-    const month = this.appointmentService.mainList().find(m => m.mese === this.monthName);
+    const month = this.store.mainList().find(m => m.mese === this.monthName);
     return month?.giorni.find(day => day.giorno === this.dayNumber);
   });
 
@@ -51,11 +51,11 @@ export class DayViewComponent {
 
   toggleDaySelection(event: Event) {
     const checked = (event.target as HTMLInputElement).checked;
-    this.appointmentService.updateDaySelection(this.monthName, this.dayNumber, checked);
+    this.store.updateDaySelection(this.monthName, this.dayNumber, checked);
   }
 
   toggleAppointmentSelection(appointment: Appointment, event: Event) {
     const checked = (event.target as HTMLInputElement).checked;
-    this.appointmentService.updateAppointmentSelection(this.monthName, this.dayNumber, appointment.id, checked);
+    this.store.updateAppointmentSelection(this.monthName, this.dayNumber, appointment.id, checked);
   }
 }

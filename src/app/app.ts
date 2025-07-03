@@ -1,10 +1,10 @@
-import { Component, computed } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { AppointmentService } from './services/appointment.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MonthViewComponent } from './app/month-view/month-view';
 import { DayViewComponent } from './app/day-view/day-view';
+import { AppointmentStore } from './services/appointment.store';
 
 @Component({
   selector: 'app-root',
@@ -13,17 +13,19 @@ import { DayViewComponent } from './app/day-view/day-view';
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-export class App {
-  protected title = 'todo-checkbox-app';
+export class App implements OnInit {
+  protected readonly store = inject(AppointmentStore);
   protected newAppointmentDescription: string = '';
   protected newAppointmentDate: string = '';
 
-  constructor(protected appointmentService: AppointmentService) {}
+  ngOnInit(): void {
+    this.store.loadAppointments();
+  }
 
   protected addAppointment() {
     if (this.newAppointmentDescription && this.newAppointmentDate) {
-      const newId = this.appointmentService.mainList().flatMap(m => m.giorni).flatMap(d => d.appuntamenti).length + 1;
-      this.appointmentService.addAppointment({
+      const newId = this.store.mainList().flatMap(m => m.giorni).flatMap(d => d.appuntamenti).length + 1;
+      this.store.addAppointment({
         id: newId,
         descrizione: this.newAppointmentDescription,
         date: new Date(this.newAppointmentDate),
@@ -34,20 +36,20 @@ export class App {
   }
 
   protected confirmSelected() {
-    this.appointmentService.confirmSelectedAppointments();
+    this.store.confirmSelectedAppointments();
   }
 
   protected cancelSelected() {
-    this.appointmentService.cancelSelectedAppointments();
+    this.store.cancelSelectedAppointments();
   }
 
   protected unconfirmSelected() {
-    this.appointmentService.unconfirmSelectedAppointments();
+    this.store.unconfirmSelectedAppointments();
   }
 
   protected clearAllData() {
     if (confirm('Sei sicuro di voler cancellare tutti i dati?')) {
-      this.appointmentService.clearAllData();
+      this.store.clearAllData();
     }
   }
 }

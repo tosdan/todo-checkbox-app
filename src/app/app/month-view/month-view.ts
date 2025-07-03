@@ -1,9 +1,9 @@
-import { Component, Input, computed } from '@angular/core';
+import { Component, Input, computed, inject } from '@angular/core';
 import { Month } from '../../models/appointment.model';
 import { CommonModule } from '@angular/common';
 import { DayViewComponent } from '../day-view/day-view';
-import { AppointmentService } from '../../services/appointment.service';
 import { FormsModule } from '@angular/forms';
+import { AppointmentStore } from '../../services/appointment.store';
 
 @Component({
   selector: 'app-month-view',
@@ -15,10 +15,10 @@ import { FormsModule } from '@angular/forms';
 export class MonthViewComponent {
   @Input() monthName!: string;
 
-  constructor(private appointmentService: AppointmentService) {}
+  private readonly store = inject(AppointmentStore);
 
   currentMonth = computed(() => {
-    return this.appointmentService.mainList().find(m => m.mese === this.monthName);
+    return this.store.mainList().find(m => m.mese === this.monthName);
   });
 
   allMonthAppointmentsSelected = computed(() => {
@@ -42,6 +42,6 @@ export class MonthViewComponent {
 
   toggleMonthSelection(event: Event) {
     const checked = (event.target as HTMLInputElement).checked;
-    this.appointmentService.updateMonthSelection(this.monthName, checked);
+    this.store.updateMonthSelection(this.monthName, checked);
   }
 }
